@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verification Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1C2A39;
+    --paper: #EFE9DC;
+    --surface: #FBF8F2;
+    --line: #D8D0BC;
+    --verified: #2F6F4E;
+    --verified-bg: #E4EEE7;
+    --flagged: #B4402A;
+    --flagged-bg: #F4E3DE;
+    --gold: #C9A227;
+    --muted: #6B6355;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.5;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 56px 24px 96px;
+  }
+
+  header.hero {
+    margin-bottom: 48px;
+  }
+
+  header.hero h1 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-weight: 700;
+    font-size: clamp(2rem, 5vw, 2.75rem);
+    line-height: 1.15;
+    margin: 0 0 14px;
+  }
+
+  header.hero p {
+    color: var(--muted);
+    font-size: 1.05rem;
+    max-width: 54ch;
+    margin: 0;
+  }
+
+  .analyzer {
+    background: var(--surface);
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    padding: 28px;
+    margin-bottom: 40px;
+  }
+
+  .analyzer label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 160px;
+    resize: vertical;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: #fff;
+    padding: 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.98rem;
+    color: var(--ink);
+  }
+
+  textarea:focus {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+  }
+
+  .analyzer-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+    gap: 16px;
+  }
+
+  .hint {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  button.check-btn {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 12px 26px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border-radius: 3px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  button.check-btn:hover { background: #101924; }
+  button.check-btn:disabled { opacity: 0.5; cursor: default; }
+
+  section.examples h2 {
+    font-family: 'Source Serif 4', serif;
+    font-size: 1.3rem;
+    margin: 0 0 16px;
+  }
+
+  .clippings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 18px;
+    margin-bottom: 48px;
+  }
+
+  .clipping {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    padding: 16px;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .clipping:nth-child(odd) { transform: rotate(-0.6deg); }
+  .clipping:nth-child(even) { transform: rotate(0.5deg); }
+
+  .clipping:hover {
+    transform: rotate(0deg) translateY(-2px);
+    box-shadow: 0 6px 14px rgba(28, 42, 57, 0.12);
+  }
+
+  .stamp {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    letter-spacing: 0.02em;
+  }
+
+  .stamp.real { background: var(--verified-bg); color: var(--verified); }
+  .stamp.fake { background: var(--flagged-bg); color: var(--flagged); }
+
+  .clipping p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--ink);
+  }
+
+  .results {
+    display: none;
+    gap: 20px;
+    grid-template-columns: 1fr;
+  }
+
+  .results.visible {
+    display: grid;
+    animation: reveal 0.35s ease;
+  }
+
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 22px 24px;
+  }
+
+  .result-card h3 {
+    font-family: 'Source Serif 4', serif;
+    font-size: 1.1rem;
+    margin: 0 0 14px;
+  }
+
+  .verdict-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .verdict-label {
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 3px 12px;
+    border-radius: 20px;
+  }
+
+  .verdict-label.real { background: var(--verified-bg); color: var(--verified); }
+  .verdict-label.fake { background: var(--flagged-bg); color: var(--flagged); }
+
+  .confidence-track {
+    background: var(--line);
+    border-radius: 20px;
+    height: 10px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+
+  .confidence-fill {
+    height: 100%;
+    background: var(--ink);
+    border-radius: 20px;
+    width: 0%;
+    transition: width 0.6s ease;
+  }
+
+  .confidence-fill.real { background: var(--verified); }
+  .confidence-fill.fake { background: var(--flagged); }
+
+  .confidence-caption {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .claim-text {
+    font-style: italic;
+    color: var(--muted);
+    margin: 0 0 12px;
+  }
+
+  .fc-verdict {
+    white-space: pre-wrap;
+    font-size: 0.95rem;
+    margin: 0 0 14px;
+  }
+
+  .sources-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .sources-list a {
+    color: var(--ink);
+    font-size: 0.88rem;
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 1px;
+  }
+
+  .sources-list a:hover { border-bottom-color: var(--ink); }
+
+  .status {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin: 4px 0 0;
+  }
+
+  .error-banner {
+    background: var(--flagged-bg);
+    color: var(--flagged);
+    border-radius: 3px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    display: none;
+  }
+
+  @media (max-width: 520px) {
+    .analyzer-footer { flex-direction: column; align-items: stretch; }
+    button.check-btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <h1>Read it twice before you trust it.</h1>
+    <p>Paste an article below. This checks two different things: whether it's <em>written</em> the way misinformation tends to be written, and whether its central claim holds up against what's actually out there right now.</p>
+  </header>
+
+  <div class="analyzer">
+    <label for="article-input">Article text</label>
+    <textarea id="article-input" placeholder="Paste a news article, headline, or claim here…"></textarea>
+    <div class="analyzer-footer">
+      <span class="hint">Or click one of the clippings below to try an example.</span>
+      <button class="check-btn" id="check-btn">Check this article</button>
+    </div>
+    <p class="status" id="status-line"></p>
+  </div>
+
+  <div class="error-banner" id="error-banner"></div>
+
+  <div class="results" id="results">
+    <div class="result-card">
+      <h3>Writing style</h3>
+      <div class="verdict-row">
+        <span class="verdict-label" id="style-label"></span>
+      </div>
+      <div class="confidence-track">
+        <div class="confidence-fill" id="confidence-fill"></div>
+      </div>
+      <p class="confidence-caption" id="confidence-caption"></p>
+    </div>
+
+    <div class="result-card">
+      <h3>Source check</h3>
+      <p class="claim-text" id="fc-claim"></p>
+      <p class="fc-verdict" id="fc-verdict"></p>
+      <ul class="sources-list" id="fc-sources"></ul>
+    </div>
+  </div>
+
+  <section class="examples">
+    <h2>Try an example</h2>
+    <div class="clippings" id="clippings"></div>
+  </section>
+
+</div>
+
+<script>
+const examples = [
+  {
+    label: "real",
+    text: "The World Health Organization officially declared the COVID-19 outbreak a global pandemic on March 11, 2020, citing the rapid international spread of the virus and the severity of illness it was causing."
+  },
+  {
+    label: "real",
+    text: "Neil Armstrong became the first person to walk on the Moon on July 20, 1969, during NASA's Apollo 11 mission, stepping onto the lunar surface as Buzz Aldrin followed shortly after."
+  },
+  {
+    label: "real",
+    text: "The central bank left its benchmark interest rate unchanged at its policy meeting this week, citing steady inflation figures and a labor market that has cooled only modestly over the past quarter."
+  },
+  {
+    label: "fake",
+    text: "BREAKING: Sources close to the matter say a major airline is secretly planning to charge passengers extra to use the bathroom during flights starting next month, though the airline has not made any public announcement and declined to confirm or deny the claim."
+  },
+  {
+    label: "fake",
+    text: "Scientists have discovered a new planet completely made of gold, and insiders claim world governments are already making secret plans to mine it before the public finds out."
+  },
+  {
+    label: "fake",
+    text: "A conspiracy theory that spread widely on social media in 2020 claimed 5G cellular network towers were spreading the COVID-19 virus and worsening symptoms in people who lived near them."
+  }
+];
+
+const clippingsEl = document.getElementById('clippings');
+const textarea = document.getElementById('article-input');
+
+examples.forEach(ex => {
+  const card = document.createElement('div');
+  card.className = 'clipping';
+  const stamp = document.createElement('span');
+  stamp.className = 'stamp ' + ex.label;
+  stamp.textContent = ex.label === 'real' ? 'Real' : 'Fake';
+  const p = document.createElement('p');
+  p.textContent = ex.text.slice(0, 110) + (ex.text.length > 110 ? '…' : '');
+  card.appendChild(stamp);
+  card.appendChild(p);
+  card.addEventListener('click', () => {
+    textarea.value = ex.text;
+    textarea.focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  clippingsEl.appendChild(card);
+});
+
+const checkBtn = document.getElementById('check-btn');
+const statusLine = document.getElementById('status-line');
+const errorBanner = document.getElementById('error-banner');
+const resultsEl = document.getElementById('results');
+
+checkBtn.addEventListener('click', async () => {
+  const text = textarea.value.trim();
+  errorBanner.style.display = 'none';
+  resultsEl.classList.remove('visible');
+
+  if (!text) {
+    errorBanner.textContent = 'Paste an article first.';
+    errorBanner.style.display = 'block';
+    return;
+  }
+
+  checkBtn.disabled = true;
+  statusLine.textContent = 'Checking writing style and searching for evidence…';
+
+  try {
+    const res = await fetch('/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Something went wrong.');
+    }
+
+    renderResults(data);
+    statusLine.textContent = '';
+  } catch (err) {
+    errorBanner.textContent = err.message;
+    errorBanner.style.display = 'block';
+    statusLine.textContent = '';
+  } finally {
+    checkBtn.disabled = false;
+  }
+});
+
+function renderResults(data) {
+  const cls = data.classification;
+  const isFake = cls.label.toLowerCase() === 'fake';
+
+  const styleLabel = document.getElementById('style-label');
+  styleLabel.textContent = cls.label;
+  styleLabel.className = 'verdict-label ' + (isFake ? 'fake' : 'real');
+
+  const fill = document.getElementById('confidence-fill');
+  fill.className = 'confidence-fill ' + (isFake ? 'fake' : 'real');
+  fill.style.width = cls.confidence + '%';
+
+  document.getElementById('confidence-caption').textContent =
+    cls.confidence + '% confidence, based on writing style alone — not verified fact.';
+
+  const fc = data.fact_check;
+  document.getElementById('fc-claim').textContent = fc.claim ? 'Claim checked: ' + fc.claim : '';
+  document.getElementById('fc-verdict').textContent = fc.verdict;
+
+  const sourcesEl = document.getElementById('fc-sources');
+  sourcesEl.innerHTML = '';
+  (fc.sources || []).forEach(src => {
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = src.url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.textContent = src.title || src.url;
+    li.appendChild(a);
+    sourcesEl.appendChild(li);
+  });
+
+  resultsEl.classList.add('visible');
+}
+</script>
+</body>
+</html>
