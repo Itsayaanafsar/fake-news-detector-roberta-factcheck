@@ -6,7 +6,6 @@ from openai import OpenAI
 import os
 from ddgs import DDGS
 
-# Path to your saved model
 model_path = "./fake_news_model"
 
 client = OpenAI(
@@ -14,13 +13,10 @@ client = OpenAI(
     api_key=os.getenv("OPENROUTER_API_KEY")
 )
 
-# Load tokenizer
 tokenizer = AutoTokenizer.from_pretrained(model_path)
 
-# Load trained model
 model = AutoModelForSequenceClassification.from_pretrained(model_path)
 
-# Put model in evaluation mode
 device = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
 )
@@ -39,7 +35,6 @@ def clean_text(text: str) -> str:
 
 def predict_news(text):
 
-    # Same preprocessing used during training
     text = clean_text(text)
 
     inputs = tokenizer(
@@ -50,7 +45,6 @@ def predict_news(text):
         max_length=256
     )
 
-    # Move to same device as model
     inputs = {
         key: value.to(device)
         for key, value in inputs.items()
@@ -73,14 +67,6 @@ def predict_news(text):
 
     labels = ["Real", "Fake"]
 
-    #print("\nArticle:")
-    #print(text)
-
-    #print("\nLogits:")
-    #print(outputs.logits)
-
-    #print("\nProbabilities:")
-    #print(probabilities)
 
     print("\nPrediction:", labels[prediction])
 
@@ -90,7 +76,6 @@ def predict_news(text):
     ) 
 
 def fact_check(article):
-    # 1. Ask the LLM to pull out the main claim first (short search-friendly query)
     claim_response = client.chat.completions.create(
         model="openrouter/free",
         messages=[
@@ -100,7 +85,6 @@ def fact_check(article):
     )
     claim = claim_response.choices[0].message.content.strip()
 
-    # 2. Search the web for that claim
     with DDGS() as ddgs:
         results = list(ddgs.text(claim, max_results=5))
 
@@ -112,7 +96,6 @@ def fact_check(article):
         for r in results
     )
 
-    # 3. Ask the LLM to verdict-check using ONLY the retrieved sources
     verdict_response = client.chat.completions.create(
         model="openrouter/free",
         messages=[
