@@ -23,9 +23,6 @@ def clean_text(text: str) -> str:
     return text
 
 
-# ---------------------------------------------------------------------------
-# Load the RoBERTa classifier once, at startup.
-# ---------------------------------------------------------------------------
 print("Loading classifier model...")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR)
@@ -34,10 +31,6 @@ model.eval()
 print("Classifier ready.")
 
 
-# ---------------------------------------------------------------------------
-# Fact-checking setup. Optional: the app still runs (classification only)
-# if ddgs/openai aren't installed or OPENROUTER_API_KEY isn't set.
-# ---------------------------------------------------------------------------
 FACT_CHECK_ENABLED = True
 try:
     from ddgs import DDGS
@@ -84,7 +77,6 @@ def fact_check(text: str):
         }
 
     try:
-        # Step 1: turn the article into a short, search-friendly claim.
         claim_response = llm_client.chat.completions.create(
             model="openrouter/free",
             messages=[
@@ -101,7 +93,6 @@ def fact_check(text: str):
         )
         claim = claim_response.choices[0].message.content.strip()
 
-        # Step 2: search the web for real, current evidence about that claim.
         with DDGS() as ddgs:
             results = list(ddgs.text(claim, max_results=5))
 
@@ -117,7 +108,6 @@ def fact_check(text: str):
             for r in results
         )
 
-        # Step 3: verdict, grounded only in the retrieved sources.
         verdict_response = llm_client.chat.completions.create(
             model="openrouter/free",
             messages=[
@@ -147,7 +137,6 @@ def fact_check(text: str):
             ],
         }
     except Exception as exc:
-        # Never let a search/LLM hiccup take down the whole request.
         return {"claim": None, "verdict": f"Fact-check failed: {exc}", "sources": []}
 
 
